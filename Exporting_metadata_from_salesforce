@@ -1,0 +1,32 @@
+from simple_salesforce import Salesforce
+import pandas as pd
+
+# Authentication with Security Token
+sf = Salesforce(username='your_username', password='your_password', security_token='your_token')
+
+# Fetch Metadata for Custom Objects
+objects_metadata = sf.restful("tooling/query", {
+    "q": "SELECT DeveloperName, CreatedDate, LastModifiedDate FROM CustomObject"
+})
+objects_df = pd.DataFrame(objects_metadata['records'])
+print("Custom Objects:", objects_df.head())
+
+# Analyze last modified date to find potentially unused objects
+unused_objects = objects_df[pd.to_datetime(objects_df['LastModifiedDate']).dt.year < 2022]  # considering unused if not modified since last year
+print("Potential Unused Objects:", unused_objects['DeveloperName'].tolist())
+
+# Fetch Metadata for Workflow Rules
+workflow_metadata = sf.restful("tooling/query", {
+    "q": "SELECT TableEnumOrId, Name, Active, CreatedDate, LastModifiedDate FROM WorkflowRule"
+})
+workflow_df = pd.DataFrame(workflow_metadata['records'])
+print("Workflow Rules:", workflow_df.head())
+
+# Fetch Metadata for Validation Rules
+validation_metadata = sf.restful("tooling/query", {
+    "q": "SELECT EntityDefinition.DeveloperName, ValidationName, Active, Description FROM ValidationRule"
+})
+validation_df = pd.DataFrame(validation_metadata['records'])
+print("Validation Rules:", validation_df.head())
+
+# Additional data handling and analysis can be included as needed
